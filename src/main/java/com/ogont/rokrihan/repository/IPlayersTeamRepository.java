@@ -13,6 +13,7 @@ import java.util.List;
 @Repository
 public interface IPlayersTeamRepository extends CrudRepository<PlayersTeamEntity, Integer> {
     List<PlayersTeamEntity> getByPlayerEntity(PlayerEntity playersTeamEntity);
+    List<PlayersTeamEntity> getAllByTeamId(Integer team_id);
     @Query("SELECT pt.playerEntity from PlayersTeamEntity pt where pt.teamEntity =:teamEntity")
     List<PlayerEntity> getTeamMates(TeamEntity teamEntity);
 }

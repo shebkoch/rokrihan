@@ -4,8 +4,10 @@ import com.ogont.rokrihan.model.util.DistributeData;
 import com.ogont.rokrihan.model.faction.FactionEntity;
 import com.ogont.rokrihan.model.match.FullMatch;
 import com.ogont.rokrihan.model.player.PlayerEntity;
+import com.ogont.rokrihan.model.util.DistributeResult;
 import com.ogont.rokrihan.service.IFactionDistributorService;
 import com.ogont.rokrihan.service.IFullMatchService;
+import com.ogont.rokrihan.service.impl.PlayerInfoService;
 import com.ogont.rokrihan.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -23,6 +25,8 @@ public class MatchController {
     IFullMatchService fullMatchService;
     @Resource
     IFactionDistributorService factionDistributorService;
+    @Resource
+    PlayerInfoService playerInfoService;
 
     @PostMapping("/match")
     @ResponseStatus(HttpStatus.OK)
@@ -33,18 +37,18 @@ public class MatchController {
     @RequestMapping(value = "/distribute", method = RequestMethod.OPTIONS)
     @ResponseStatus(HttpStatus.OK)
     public @ResponseBody
-    List<Pair<PlayerEntity, FactionEntity>> distribute(@RequestBody DistributeData data) {
+    List<DistributeResult> distribute(@RequestBody DistributeData data) {
         return distribute2(data);
     }
 
     @RequestMapping(value = "/distribute", method = RequestMethod.POST)
     @ResponseStatus(HttpStatus.OK)
     public @ResponseBody
-    List<Pair<PlayerEntity, FactionEntity>> distribute2(@RequestBody DistributeData data) {
+    List<DistributeResult> distribute2(@RequestBody DistributeData data) {
         Map<PlayerEntity, FactionEntity> map = factionDistributorService.distribute(data);
-        List<Pair<PlayerEntity, FactionEntity>> list = new ArrayList<>();
+        List<DistributeResult> list = new ArrayList<>();
         for (Map.Entry<PlayerEntity, FactionEntity> entry : map.entrySet()) {
-            list.add(new Pair<>(entry.getKey(), entry.getValue()));
+            list.add(new DistributeResult(entry.getKey(), playerInfoService.findByPlayerId(entry.getKey().getId()), entry.getValue()));
         }
         return list;
     }

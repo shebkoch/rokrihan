@@ -3,8 +3,10 @@ package com.ogont.rokrihan.controller;
 import com.ogont.rokrihan.model.player.LoginUser;
 import com.ogont.rokrihan.model.player.PlayerEntity;
 import com.ogont.rokrihan.model.player.PlayerInfoEntity;
+import com.ogont.rokrihan.model.player.PlayerResultEntity;
 import com.ogont.rokrihan.model.player.team.PlayersTeamEntity;
 import com.ogont.rokrihan.model.player.team.TeamEntity;
+import com.ogont.rokrihan.model.util.DistributeResult;
 import com.ogont.rokrihan.service.impl.LoginService;
 import com.ogont.rokrihan.service.impl.PlayerInfoService;
 import com.ogont.rokrihan.service.impl.PlayerService;
@@ -36,6 +38,11 @@ public class PlayerController {
     @Resource
     PlayerInfoService playerInfoService;
 
+    @GetMapping("/players/{count}")
+    public @ResponseBody
+    List<PlayerEntity> players(@PathVariable Integer count){
+        return playerService.findTop(count);
+    }
     @GetMapping("/players")
     public @ResponseBody
     List<PlayerEntity> players() {
@@ -48,6 +55,22 @@ public class PlayerController {
     public @ResponseBody Map<String, List<PlayerEntity>> teamMates(@PathVariable Integer id){
         Map<TeamEntity, List<PlayerEntity>> teamMates = playersTeamService.getTeamMates(playerService.findById(id).get());
         return teamMates.entrySet().stream().collect(Collectors.toMap(x->x.getKey().getName(), Map.Entry::getValue));
+    }
+    @GetMapping("player/{id}/all_mates/")
+    public @ResponseBody List<DistributeResult> allTeamMates(@PathVariable Integer id){
+        List<DistributeResult> distributeResults = new ArrayList<>();
+        Map<TeamEntity, List<PlayerEntity>> teamMates = playersTeamService.getTeamMates(playerService.findById(id).get());
+        for(Map.Entry<TeamEntity, List<PlayerEntity>> entry : teamMates.entrySet()){
+            for (PlayerEntity playerEntity : entry.getValue()) {
+                distributeResults.add(new DistributeResult(playerEntity, playerInfoService.findByPlayerId(playerEntity.getId()), null));
+            }
+        }
+
+        return distributeResults;
+    }
+    @GetMapping("best/in/team/{id}")
+    public @ResponseBody List<PlayerEntity> bestByTeam(@PathVariable Integer id){
+        return playersTeamService.getBestByTeam(id);
     }
 
     @GetMapping("/player/{id}")

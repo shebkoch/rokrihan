@@ -11,5 +11,5 @@ public interface IFullMatchService {
 
     List<FullMatch> getAll();
 
-    void computeMmr(FullMatch match);
+
 }

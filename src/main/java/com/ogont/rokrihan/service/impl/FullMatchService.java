@@ -1,5 +1,7 @@
 package com.ogont.rokrihan.service.impl;
 
+import com.ogont.rokrihan.model.faction.FactionComboEntity;
+import com.ogont.rokrihan.model.faction.FactionEntity;
 import com.ogont.rokrihan.model.match.FullMatch;
 import com.ogont.rokrihan.model.match.MatchEntity;
 import com.ogont.rokrihan.model.player.PlayerEntity;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,16 +29,37 @@ public class FullMatchService implements IFullMatchService {
     IPlayerResultService playerResultService;
     @Resource
     IPlayerService playerService;
+    @Resource
+    FactionComboService factionComboService;
+    @Resource
+    FactionService factionService;
+
     @Override
     public FullMatch save(FullMatch fullMatch) {
-        matchService.save(fullMatch.getMatchEntity());
+        fullMatch.getPlayerResultEntities().sort(Comparator.comparingInt(PlayerResultEntity::getScore));
+        fullMatch.getMatchEntity().setWinnerScore(fullMatch.getPlayerResultEntities().get(0).getScore());
+        fullMatch.setMatchEntity(matchService.save(fullMatch.getMatchEntity()));
+        playerResultService.refresh(fullMatch.getPlayerResultEntities());
         setMatchId(fullMatch);
-        computeMmr(fullMatch);
+
+
+        //TODO:List
+        List<PlayerResultEntity> playerResultEntities = new ArrayList<>();
+        playerResultEntities.add(fullMatch.getPlayerResultEntities().get(0));
+        playerResultEntities.add(findEnemy(playerResultEntities.get(0), fullMatch.getPlayerResultEntities()));
+        computeMmr(playerResultEntities);
+        computeMmr(fullMatch.getPlayerResultEntities().subList(2,4));
         playerResultService.saveAll(fullMatch.getPlayerResultEntities());
         playerService.saveAll(getPlayersList(fullMatch));
         return fullMatch;
     }
-
+    private PlayerResultEntity findEnemy(PlayerResultEntity first, List<PlayerResultEntity> list){
+        FactionEntity enemy = factionComboService.getEnemy(first.getFactionId());
+        for(PlayerResultEntity playerResultEntity : list){
+            if (playerResultEntity.getFactionId().equals(enemy.getId())) return playerResultEntity;
+        }
+        return null;
+    }
     private List<PlayerEntity> getPlayersList(FullMatch fullMatch) {
         return fullMatch.getPlayerResultEntities().stream().map(PlayerResultEntity::getPlayerEntity).collect(Collectors.toList());
     }
@@ -63,12 +87,11 @@ public class FullMatchService implements IFullMatchService {
         return res;
     }
 
-    @Override
-    public void computeMmr(FullMatch match) {
-        List<PlayerResultEntity> playerResultEntities = match.getPlayerResultEntities();
+    public void computeMmr(List<PlayerResultEntity> playerResultEntities) {
         if (playerResultEntities.size() != 2) return;
         PlayerResultEntity resultA = playerResultEntities.get(0);
         PlayerResultEntity resultB = playerResultEntities.get(1);
+
         compute(resultA, resultB);
         compute(resultB, resultA);
     }
@@ -78,6 +101,7 @@ public class FullMatchService implements IFullMatchService {
         resultA.setMmrChange((int) resA);
         PlayerEntity playerEntityA = resultA.getPlayerEntity();
         playerEntityA.setMmr(playerEntityA.getMmr() + (int) resA);
+        factionService.computeScoreAndSave(resultA.getFactionEntity(), resultA.getWinner(), resultA.getWinner() ? 1:2, 2);
     }
 
 

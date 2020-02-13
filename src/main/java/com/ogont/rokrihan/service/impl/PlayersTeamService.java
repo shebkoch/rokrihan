@@ -15,10 +15,8 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.security.auth.login.LoginException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class PlayersTeamService implements IPlayersTeamService {
@@ -40,5 +38,9 @@ public class PlayersTeamService implements IPlayersTeamService {
             teamMates.put(teamEntity, repository.getTeamMates(teamEntity));
         }
         return teamMates;
+    }
+    public List<PlayerEntity> getBestByTeam(Integer teamId){
+        List<PlayersTeamEntity> playersTeamEntities = repository.getAllByTeamId(teamId);
+        return playersTeamEntities.stream().map(PlayersTeamEntity::getPlayerEntity).sorted(Comparator.comparingInt(PlayerEntity::getMmr)).collect(Collectors.toList());
     }
 }

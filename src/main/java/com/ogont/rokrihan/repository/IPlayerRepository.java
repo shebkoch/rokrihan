@@ -13,5 +13,4 @@ public interface IPlayerRepository extends CrudRepository<PlayerEntity, Integer>
     @Query("SELECT AVG(p.mmr) from PlayerEntity p")
     Integer getAverageMmr();
     List<PlayerEntity> findAllByIdIn(List<Integer> ids);
-
 }

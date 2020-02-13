@@ -13,7 +13,7 @@
     <version>0.0.1</version>
     <name>rokrihan</name>
     <description>sever for rokrihan analytics</description>
-
+    <packaging>war</packaging>
     <properties>
         <java.version>1.8</java.version>
     </properties>

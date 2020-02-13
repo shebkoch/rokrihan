@@ -39,4 +39,8 @@ public class PlayerService implements IPlayerService {
     public PlayerEntity getByName(String name){
         return repository.findByName(name);
     }
+
+    public List<PlayerEntity> findTop(Integer count){
+        return null;
+    }
 }
